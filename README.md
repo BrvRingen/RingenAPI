@@ -1,2 +1,2 @@
 # RingenAPI
-API für Mannschaftskampfprogramme (z. B. Ringen)
+API für das Programm Ringen
