@@ -7,6 +7,5 @@ class Startausweis extends BaseEntity
 	$name,
 	$givenname,
 	$status,
-	$birthday
-	$StartausweisNr;
+	$birthday;
 }

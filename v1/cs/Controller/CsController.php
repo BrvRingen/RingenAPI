@@ -6,6 +6,7 @@ use Api\Entity\Competition;
 use Api\Entity\Bout;
 use Api\Entity\Cs;
 use Api\Entity\Table;
+use Api\Entity\Startausweis;
 use Api\Database\DatabaseConnection;
 
 /**
@@ -38,14 +39,14 @@ class CsController extends ApiController
 				
 				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/?startausweisNr=4440&saisonId=2019&competitionId=018001r"
 
-				if(isset($_GET['saisonId']) && isset($_GET['ligaId']) && isset($_GET['tableId']))
+				if(isset($_GET['startausweisNr']) && isset($_GET['saisonId']) && isset($_GET['competitionId']))
+					$result = $this->GetStartausweis($_GET['startausweisNr'],$_GET['saisonId'], $_GET['competitionId']);
+				elseif(isset($_GET['saisonId']) && isset($_GET['ligaId']) && isset($_GET['tableId']))
 					$result = $this->GetCompetition($_GET['saisonId'], $_GET['ligaId'], $_GET['tableId']);
 				elseif(isset($_GET['saisonId']) && isset($_GET['competitionId']))
 					$result = $this->GetBout($_GET['saisonId'], $_GET['competitionId']);
 				elseif(isset($_GET['saisonId']))
 					$result = $this->GetTable($_GET['saisonId']);
-				elseif(isset($_GET['startausweisNr']) && isset($_GET['saisonId']) && isset($_GET['competitionId']))
-					$result = $this->GetStartausweis($_GET['startausweisNr'],$_GET['saisonId'], $_GET['competitionId']);
 				else
 					$result = $this->GetCs();
 			}
@@ -172,23 +173,21 @@ class CsController extends ApiController
 	private function GetStartausweis($startausweisNr , $saisonId, $competitionId)
 	{
 		
-		//if ($_SERVER['PHP_AUTH_USER'] != 'test' or $_SERVER['PHP_AUTH_PW'] != 'test')
-		//{
-		//	throw new ApiException('User'.$_SERVER['PHP_AUTH_USER'].' is not allowed or has wrong password.', ApiException::AUTHENTICATION_FAILED);
-		//}
-		
-		
-		
+		if (!($_SERVER['PHP_AUTH_USER'] == 'xxx' and $_SERVER['PHP_AUTH_PW'] == 'xxx'))
+		{
+			throw new ApiException('User'.$_SERVER['PHP_AUTH_USER'].' is not allowed or has wrong password.', ApiException::AUTHENTICATION_FAILED);
+		}
+
 		$databaseConnection = new DatabaseConnection();
 		$conn = $databaseConnection->Connect();		
 
-		$dbResults = $conn->query("SELECT name, givenname, status, birthday FROM rdb_wrestler WHERE Id='BRV." & $startausweisNr."'");
+		$dbResults = $conn->query("SELECT name, givenname, status, birthday FROM jos_rdb_wrestler WHERE Id='rdb.".$startausweisNr."'");
 
 		$Startausweis = $dbResults->fetch_object('Api\Entity\Startausweis');
 		
 		$databaseConnection->Close($conn);
 
-		return $Startausweis->toArray();
+		return ($Startausweis)->toArray();
 	}
 	
 	
