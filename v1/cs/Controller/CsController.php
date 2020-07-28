@@ -26,23 +26,26 @@ class CsController extends ApiController
 
 			if ($_SERVER['REQUEST_METHOD'] == 'GET')
 			{
-				//curl -X GET "http://www.SpVgg-Freising.de/BrvApi/v1/cs/?saisonId=2019&ligaId=Oberliga&tableId=Nord"
-				//curl -X GET "http://www.SpVgg-Freising.de/BrvApi/v1/cs/?saisonId=2019&ligaId=(S)+Bezirksliga&tableId=Oberbayern
-				//curl -X GET "http://www.SpVgg-Freising.de/BrvApi/v1/cs/?saisonId=2019&ligaId=Aufstiegsk%c3%a4mpfe&tableId=Landesliga+S%c3%bcd"
+				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/?saisonId=2019&ligaId=Oberliga&tableId=Nord"
+				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/?saisonId=2019&ligaId=(S)+Bezirksliga&tableId=Oberbayern
+				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/?saisonId=2019&ligaId=Aufstiegsk%c3%a4mpfe&tableId=Landesliga+S%c3%bcd"
 				
-				//curl -X GET "http://www.SpVgg-Freising.de/BrvApi/v1/cs/?saisonId=2019"
+				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/?saisonId=2019"
 
-				//curl -X GET "http://www.SpVgg-Freising.de/BrvApi/v1/cs/"
-				
+				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/"
 
-				//curl -X GET "http://www.SpVgg-Freising.de/BrvApi/v1/cs/?competitionId=018001r"
+				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/?competitionId=018001r"
 				
+				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/?startausweisNr=4440&saisonId=2019&competitionId=018001r"
+
 				if(isset($_GET['saisonId']) && isset($_GET['ligaId']) && isset($_GET['tableId']))
 					$result = $this->GetCompetition($_GET['saisonId'], $_GET['ligaId'], $_GET['tableId']);
 				elseif(isset($_GET['saisonId']) && isset($_GET['competitionId']))
 					$result = $this->GetBout($_GET['saisonId'], $_GET['competitionId']);
 				elseif(isset($_GET['saisonId']))
-					$result = $this->GetTable($_GET['saisonId']);				
+					$result = $this->GetTable($_GET['saisonId']);
+				elseif(isset($_GET['startausweisNr']) && isset($_GET['saisonId']) && isset($_GET['competitionId']))
+					$result = $this->GetStartausweis($_GET['startausweisNr'],$_GET['saisonId'], $_GET['competitionId']);
 				else
 					$result = $this->GetCs();
 			}
@@ -51,8 +54,8 @@ class CsController extends ApiController
 			//}
 			elseif ($_SERVER['REQUEST_METHOD'] == 'PUT')
 			{
-				if(isset($_GET['saisonId']) && isset($_GET['competitionId']))
-					$result = $this->UpdateCompetition($input, $_GET['saisonId'], $_GET['competitionId']);
+				//if(isset($_GET['saisonId']) && isset($_GET['competitionId']))
+				//	$result = $this->UpdateCompetition($input, $_GET['saisonId'], $_GET['competitionId']);
 			}
 			//elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
 			//	$result = $this->delete((int)$_GET['id']);
@@ -84,7 +87,7 @@ class CsController extends ApiController
 	{
 		$databaseConnection = new DatabaseConnection();
 		$conn = $databaseConnection->Connect();		
-		$dbResults = $conn->query("SELECT * FROM jos_rdb_cs");
+		$dbResults = $conn->query("SELECT saisonId FROM jos_rdb_cs");
 		
 		$Css = [];
 		$i = 0;
@@ -165,6 +168,29 @@ class CsController extends ApiController
 
 		return $Bouts;
 	}
+
+	private function GetStartausweis($startausweisNr , $saisonId, $competitionId)
+	{
+		
+		//if ($_SERVER['PHP_AUTH_USER'] != 'test' or $_SERVER['PHP_AUTH_PW'] != 'test')
+		//{
+		//	throw new ApiException('User'.$_SERVER['PHP_AUTH_USER'].' is not allowed or has wrong password.', ApiException::AUTHENTICATION_FAILED);
+		//}
+		
+		
+		
+		$databaseConnection = new DatabaseConnection();
+		$conn = $databaseConnection->Connect();		
+
+		$dbResults = $conn->query("SELECT name, givenname, status, birthday FROM rdb_wrestler WHERE Id='BRV." & $startausweisNr."'");
+
+		$Startausweis = $dbResults->fetch_object('Api\Entity\Startausweis');
+		
+		$databaseConnection->Close($conn);
+
+		return $Startausweis->toArray();
+	}
+	
 	
 	/**
 	 * @param array $data
