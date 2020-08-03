@@ -33,9 +33,11 @@ class CsController extends ApiController
 				
 				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/?saisonId=2019"
 
+				//Abfragen aller Jahre
 				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/"
 
-				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/?competitionId=018001r"
+				//Abfragen eines Kampfes
+				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/?saisonId=2019&competitionId=018001r"
 				
 				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/?startausweisNr=4440&saisonId=2019&competitionId=018001r"
 
