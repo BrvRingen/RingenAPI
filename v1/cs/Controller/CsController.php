@@ -28,24 +28,6 @@ class CsController extends ApiController
 
 			if ($_SERVER['REQUEST_METHOD'] == 'GET')
 			{
-				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/?saisonId=2019&ligaId=Oberliga&tableId=Nord"
-				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/?saisonId=2019&ligaId=(S)+Bezirksliga&tableId=Oberbayern
-				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/?saisonId=2019&ligaId=Aufstiegsk%c3%a4mpfe&tableId=Landesliga+S%c3%bcd"
-				
-				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/?saisonId=2019"
-
-				//Abfragen aller Jahre
-				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/"
-
-				//Abfragen eines Kampfes
-				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/?saisonId=2019&competitionId=018001r"
-				
-				//Abfrage von Kampf-Details
-				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/?saisonId=2019&competitionId=018001r&order=1"
-				
-				//Abfrage eines Ringers (Nur mit Anmeldung!!!)
-				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/?startausweisNr=4440&saisonId=2019&competitionId=018001r"
-
 				if(isset($_GET['startausweisNr']) && isset($_GET['saisonId']) && isset($_GET['competitionId']))
 					$result = $this->GetStartausweis($_GET['startausweisNr'],$_GET['saisonId'], $_GET['competitionId']);
 				elseif(isset($_GET['saisonId']) && isset($_GET['competitionId']) && isset($_GET['order']))
