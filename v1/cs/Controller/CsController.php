@@ -4,6 +4,7 @@ namespace Api\Controller;
 use Api\Library\ApiException;
 use Api\Entity\Competition;
 use Api\Entity\Bout;
+use Api\Entity\BoutAnnotation;
 use Api\Entity\Cs;
 use Api\Entity\Table;
 use Api\Entity\Startausweis;
@@ -39,14 +40,20 @@ class CsController extends ApiController
 				//Abfragen eines Kampfes
 				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/?saisonId=2019&competitionId=018001r"
 				
+				//Abfrage von Kampf-Details
+				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/?saisonId=2019&competitionId=018001r&order=1"
+				
+				//Abfrage eines Ringers (Nur mit Anmeldung!!!)
 				//curl -X GET "https://www.brv-ringen.de/Api/v1/cs/?startausweisNr=4440&saisonId=2019&competitionId=018001r"
 
 				if(isset($_GET['startausweisNr']) && isset($_GET['saisonId']) && isset($_GET['competitionId']))
 					$result = $this->GetStartausweis($_GET['startausweisNr'],$_GET['saisonId'], $_GET['competitionId']);
-				elseif(isset($_GET['saisonId']) && isset($_GET['ligaId']) && isset($_GET['tableId']))
-					$result = $this->GetCompetition($_GET['saisonId'], $_GET['ligaId'], $_GET['tableId']);
+				elseif(isset($_GET['saisonId']) && isset($_GET['competitionId']) && isset($_GET['order']))
+					$result = $this->GetBoutAnnotation($_GET['saisonId'], $_GET['competitionId'], $_GET['order']);
 				elseif(isset($_GET['saisonId']) && isset($_GET['competitionId']))
 					$result = $this->GetBout($_GET['saisonId'], $_GET['competitionId']);
+				elseif(isset($_GET['saisonId']) && isset($_GET['ligaId']) && isset($_GET['tableId']))
+					$result = $this->GetCompetition($_GET['saisonId'], $_GET['ligaId'], $_GET['tableId']);
 				elseif(isset($_GET['saisonId']))
 					$result = $this->GetTable($_GET['saisonId']);
 				else
@@ -170,6 +177,24 @@ class CsController extends ApiController
 		$databaseConnection->Close($conn);
 
 		return $Bouts;
+	}
+
+	private function GetBoutAnnotation($saisonId, $competitionId, $order)
+	{
+		$databaseConnection = new DatabaseConnection();
+		$conn = $databaseConnection->Connect();		
+
+		$dbResults = $conn->query("SELECT * FROM jos_rdb_cs__bout__annotation WHERE saisonId='".$saisonId."' AND competitionId='".$competitionId."' AND `order`=".$order);
+
+		$BoutAnnotations = [];
+		$i = 0;
+		while ($BoutAnnotation = $dbResults->fetch_object('Api\Entity\BoutAnnotation')) {
+			$BoutAnnotations[$i++] = ($BoutAnnotation)->toArray();
+		}
+		
+		$databaseConnection->Close($conn);
+
+		return $BoutAnnotations;
 	}
 
 	private function GetStartausweis($startausweisNr , $saisonId, $competitionId)
