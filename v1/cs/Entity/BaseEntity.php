@@ -10,7 +10,8 @@ abstract class BaseEntity
 	{
 		$arr = [];
 		foreach ($this as $key => $val) {
-			$arr[$key] = utf8_encode($val);
+			//$arr[$key] = utf8_encode($val);
+			$arr[$key] = $val;
 		}
 
 		return $arr;

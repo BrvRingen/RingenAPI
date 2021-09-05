@@ -1,0 +1,274 @@
+{
+	"info": {
+		"_postman_id": "c32c53c1-707e-495b-9205-2b8eed06ed12",
+		"name": "RingenAPI",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "GetListSaison",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://www.brv-ringen.de/Api/v1/cs/?op=listSaison",
+					"protocol": "https",
+					"host": [
+						"www",
+						"brv-ringen",
+						"de"
+					],
+					"path": [
+						"Api",
+						"v1",
+						"cs",
+						""
+					],
+					"query": [
+						{
+							"key": "op",
+							"value": "listSaison"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetListLiga",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://www.brv-ringen.de/Api/v1/cs/?op=listLiga&sid=2019",
+					"protocol": "https",
+					"host": [
+						"www",
+						"brv-ringen",
+						"de"
+					],
+					"path": [
+						"Api",
+						"v1",
+						"cs",
+						""
+					],
+					"query": [
+						{
+							"key": "op",
+							"value": "listLiga"
+						},
+						{
+							"key": "sid",
+							"value": "2019"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetListCompetition",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://www.brv-ringen.de/Api/v1/cs/?op=listCompetition&sid=2021&ligaId=Gruppenliga&rid=Süd",
+					"protocol": "https",
+					"host": [
+						"www",
+						"brv-ringen",
+						"de"
+					],
+					"path": [
+						"Api",
+						"v1",
+						"cs",
+						""
+					],
+					"query": [
+						{
+							"key": "op",
+							"value": "listCompetition"
+						},
+						{
+							"key": "sid",
+							"value": "2021"
+						},
+						{
+							"key": "ligaId",
+							"value": "Gruppenliga"
+						},
+						{
+							"key": "rid",
+							"value": "Süd"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetCompetition",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://www.brv-ringen.de/Api/v1/cs/?op=getCompetition&sid=2019&cid=001006a",
+					"protocol": "https",
+					"host": [
+						"www",
+						"brv-ringen",
+						"de"
+					],
+					"path": [
+						"Api",
+						"v1",
+						"cs",
+						""
+					],
+					"query": [
+						{
+							"key": "op",
+							"value": "getCompetition"
+						},
+						{
+							"key": "sid",
+							"value": "2019"
+						},
+						{
+							"key": "cid",
+							"value": "001006a"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetCompetition (not ready)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://www.brv-ringen.de/Api/v1/cs/?op=getCompetition&sid=2021&cid=109110j",
+					"protocol": "https",
+					"host": [
+						"www",
+						"brv-ringen",
+						"de"
+					],
+					"path": [
+						"Api",
+						"v1",
+						"cs",
+						""
+					],
+					"query": [
+						{
+							"key": "op",
+							"value": "getCompetition"
+						},
+						{
+							"key": "sid",
+							"value": "2021"
+						},
+						{
+							"key": "cid",
+							"value": "109110j"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetRinger (BasicAuth required)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://www.brv-ringen.de/Api/v1/cs/?op=getRinger&sid=2021&cid=109110j&startausweisnummer=4440",
+					"protocol": "https",
+					"host": [
+						"www",
+						"brv-ringen",
+						"de"
+					],
+					"path": [
+						"Api",
+						"v1",
+						"cs",
+						""
+					],
+					"query": [
+						{
+							"key": "op",
+							"value": "getRinger"
+						},
+						{
+							"key": "sid",
+							"value": "2021"
+						},
+						{
+							"key": "cid",
+							"value": "109110j"
+						},
+						{
+							"key": "startausweisnummer",
+							"value": "4440"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "basic",
+		"basic": [
+			{
+				"key": "password",
+				"value": "YourPasswortd",
+				"type": "string"
+			},
+			{
+				"key": "username",
+				"value": "YourUser",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

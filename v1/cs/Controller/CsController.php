@@ -2,13 +2,14 @@
 namespace Api\Controller;
 
 use Api\Library\ApiException;
-use Api\Entity\Competition;
+use Api\Entity\liga;
 use Api\Entity\Bout;
 use Api\Entity\BoutAnnotation;
-use Api\Entity\Cs;
-use Api\Entity\Table;
-use Api\Entity\Startausweis;
+use Api\Entity\saison;
+use Api\Entity\competition;
+use Api\Entity\Ringer;
 use Api\Database\DatabaseConnection;
+use Api\Database\BasicAuthUsers;
 
 /**
  * Class MkController
@@ -28,18 +29,20 @@ class CsController extends ApiController
 
 			if ($_SERVER['REQUEST_METHOD'] == 'GET')
 			{
-				if(isset($_GET['startausweisNr']) && isset($_GET['saisonId']) && isset($_GET['competitionId']))
-					$result = $this->GetStartausweis($_GET['startausweisNr'],$_GET['saisonId'], $_GET['competitionId']);
-				elseif(isset($_GET['saisonId']) && isset($_GET['competitionId']) && isset($_GET['order']))
-					$result = $this->GetBoutAnnotation($_GET['saisonId'], $_GET['competitionId'], $_GET['order']);
-				elseif(isset($_GET['saisonId']) && isset($_GET['competitionId']))
-					$result = $this->GetBout($_GET['saisonId'], $_GET['competitionId']);
-				elseif(isset($_GET['saisonId']) && isset($_GET['ligaId']) && isset($_GET['tableId']))
-					$result = $this->GetCompetition($_GET['saisonId'], $_GET['ligaId'], $_GET['tableId']);
-				elseif(isset($_GET['saisonId']))
-					$result = $this->GetTable($_GET['saisonId']);
+				$op = $_GET['op'];
+				
+				if($op == 'listSaison')
+					$result = $this->GetListSaison();
+				elseif($op == 'listLiga')
+					$result = $this->GetListLiga($_GET['sid']);
+				elseif($op == 'listCompetition')
+					$result = $this->GetListCompetition($_GET['sid'], $_GET['ligaId'], $_GET['rid']);
+				elseif($op == 'getCompetition')
+					$result = $this->GetCompetition($_GET['sid'], $_GET['cid']);
+				elseif($op == 'getRinger')
+					$result = $this->GetRinger($_GET['startausweisnummer'],$_GET['sid'], $_GET['cid']);
 				else
-					$result = $this->GetCs();
+					throw new ApiException('', ApiException::UNKNOWN_METHOD);
 			}
 			//elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
 			//	$result = $this->create($input);
@@ -62,162 +65,213 @@ class CsController extends ApiController
 				header('HTTP/1.0 401 Unauthorized');
 			elseif ($e->getCode() == ApiException::MALFORMED_INPUT)
 				header('HTTP/1.0 400 Bad Request');
+			elseif ($e->getCode() == ApiException::UNKNOWN_METHOD)
+				header('HTTP/1.0 400 Bad Request');
 			elseif ($e->getCode() == ApiException::UNKNOWN_ID)
+				header('HTTP/1.0 400 Bad Request');
+			elseif ($e->getCode() == ApiException::NOT_IMPLEMENTED)
 				header('HTTP/1.0 400 Bad Request');
 				
 			$result = ['message' => $e->getMessage()];
 		}
 		
-		header('Content-Type: application/json');
+		header('Content-Type: application/json; charset=UTF-8');
 		echo json_encode($result); //JSON_PARTIAL_OUTPUT_ON_ERROR
 	}
 
-	/**
-	 * @return array
-	 */
-	private function GetCs()
+
+	private function GetListSaison()
 	{
 		$databaseConnection = new DatabaseConnection();
 		$conn = $databaseConnection->Connect();		
-		$dbResults = $conn->query("SELECT saisonId FROM jos_rdb_cs");
+		$dbResults = $conn->query("SELECT * FROM jos_rdb_cs");
 		
-		$Css = [];
-		$i = 0;
-		while ($Cs = $dbResults->fetch_object('Api\Entity\Cs')) {
-			$Css[$i++] = ($Cs)->toArray();
+		$saisonList = [];
+		while ($saison = $dbResults->fetch_object('Api\Entity\saison')) {
+			$saisonList[$saison->saisonId] = ($saison)->toArray();
 		}
 		
 		$databaseConnection->Close($conn);
 
-		return $Css;
+		return array('rpcid' => null, 'rc' => 'ok', 'api' => array('rdb' => '3.0.8 \/ 3.0.9','jrcs' => '1.0.3'), 'saisonList' => $saisonList);
 	}
 	
-	/**
-	 * @param int $CompetitionId
-	 *
-	 * @return array
-	 */
-	private function GetTable($saisonId)
+	private function GetListLiga($sid)
 	{
 		$databaseConnection = new DatabaseConnection();
 		$conn = $databaseConnection->Connect();		
-		$dbResults = $conn->query("SELECT * FROM jos_rdb_cs__table WHERE saisonId='".$saisonId."'");
-		
-		$Tables = [];
-		$i = 0;
-		while ($Table = $dbResults->fetch_object('Api\Entity\Table')) {
-			$Tables[$i++] = ($Table)->toArray();
+		$dbResults = $conn->query("SELECT * FROM jos_rdb_cs__table WHERE saisonId='".$sid."'");
+
+		$ligaList = [];
+		$i = 1;
+		while ($liga = $dbResults->fetch_object('Api\Entity\liga'))
+		{
+			if($ligaList[utf8_encode($liga->ligaId)][utf8_encode($liga->tableId)] == null) //[$liga->tableId]
+			{
+				$ligaList[utf8_encode($liga->ligaId)][utf8_encode($liga->tableId)] = $liga->toArray(); //[$liga->tableId]				
+			}
+			else {
+				array_push($ligaList[utf8_encode($liga->ligaId)][utf8_encode($liga->tableId)], $liga->toArray()); //[$liga->tableId]
+			}
 		}
 		
 		$databaseConnection->Close($conn);
 
-		return $Tables;
-	}
+		return array('rpcid' => null, 'rc' => 'ok', 'api' => array('rdb' => '3.0.8 \/ 3.0.9','jrcs' => '1.0.3'), 'year' => '2021','sid' => $sid, 'ligaList' => $ligaList);
+	}	
 	
-
-	/**
-	 * @param int $CompetitionId
-	 *
-	 * @return array
-	 */
-	private function GetCompetition($saisonId, $ligaId, $tableId)
+	private function GetListCompetition($sid, $ligaId, $rid)
 	{
 		$databaseConnection = new DatabaseConnection();
 		$conn = $databaseConnection->Connect();		
 
-		$dbResults = $conn->query("SELECT * FROM jos_rdb_cs__competition WHERE saisonId='".$saisonId."' AND ligaId='".$ligaId."' AND tableId='".$tableId."'");
-
-		$Competitions = [];
-		$i = 0;
-		while ($Competition = $dbResults->fetch_object('Api\Entity\Competition')) {
-			$Competitions[$i++] = ($Competition)->toArray();
+		$dbResults = $conn->query("SELECT * FROM jos_rdb_cs__competition WHERE saisonId='".$sid."' AND ligaId='".$ligaId."' AND tableId='".$rid."'");
+		$competitionList = [];
+		while ($competition = $dbResults->fetch_object('Api\Entity\competition')) {
+			$competitionList[$competition->competitionId] = ($competition)->toArray();
 		}
 		
 		$databaseConnection->Close($conn);
 
-		return $Competitions;
+		return array('rpcid' => null, 'rc' => 'ok', 'api' => array('rdb' => '3.0.8 \/ 3.0.9','jrcs' => '1.0.3'), 'year' => '2021','sid' => $sid,'lid' => $ligaId,'rid' => $rid, 'competitionList' => $competitionList);
+		
 	}
-	
-	/**
-	 * @param int $CompetitionId
-	 *
-	 * @return array
-	 */
-	private function GetBout($saisonId, $competitionId)
+
+	private function GetCompetition($sid, $cid)
 	{
 		$databaseConnection = new DatabaseConnection();
 		$conn = $databaseConnection->Connect();		
 
-		$dbResults = $conn->query("SELECT * FROM jos_rdb_cs__bout WHERE saisonId='".$saisonId."' AND competitionId='".$competitionId."'");
+		$competition = [];
+		
+		$dbResults = $conn->query("SELECT * FROM jos_rdb_cs__competition WHERE saisonId='".$sid."' AND competitionId='".$cid."'");
+		$competition = $dbResults->fetch_object('Api\Entity\competition')->toArray();
+
+
+		$dbResults = $conn->query("SELECT * FROM jos_rdb_cs__bout WHERE saisonId='".$sid."' AND competitionId='".$cid."'");
 
 		$Bouts = [];
-		$i = 0;
-		while ($Bout = $dbResults->fetch_object('Api\Entity\Bout')) {
-			$Bouts[$i++] = ($Bout)->toArray();
-		}
-		
-		$databaseConnection->Close($conn);
-
-		return $Bouts;
-	}
-
-	private function GetBoutAnnotation($saisonId, $competitionId, $order)
-	{
-		$databaseConnection = new DatabaseConnection();
-		$conn = $databaseConnection->Connect();		
-
-		$dbResults = $conn->query("SELECT * FROM jos_rdb_cs__bout__annotation WHERE saisonId='".$saisonId."' AND competitionId='".$competitionId."' AND `order`=".$order);
-
-		$BoutAnnotations = [];
-		$i = 0;
-		while ($BoutAnnotation = $dbResults->fetch_object('Api\Entity\BoutAnnotation')) {
-			$BoutAnnotations[$i++] = ($BoutAnnotation)->toArray();
-		}
-		
-		$databaseConnection->Close($conn);
-
-		return $BoutAnnotations;
-	}
-
-	private function GetStartausweis($startausweisNr , $saisonId, $competitionId)
-	{
-		
-		if (!($_SERVER['PHP_AUTH_USER'] == 'xxx' and $_SERVER['PHP_AUTH_PW'] == 'xxx'))
+		while ($Bout = $dbResults->fetch_object('Api\Entity\Bout'))
 		{
-			throw new ApiException('User'.$_SERVER['PHP_AUTH_USER'].' is not allowed or has wrong password.', ApiException::AUTHENTICATION_FAILED);
+			$BoutArray = $Bout->toArray();
+			$dbBoutAnnotationsResults = $conn->query("SELECT * FROM jos_rdb_cs__bout__annotation WHERE saisonId='".$sid."' AND competitionId='".$cid."' AND `order`=".$Bout->order);
+
+			$BoutAnnotations = [];
+			while ($BoutAnnotation = $dbBoutAnnotationsResults->fetch_object('Api\Entity\BoutAnnotation')) {
+				$BoutArray["annotation"]["1"][$BoutAnnotation->type] = $BoutAnnotation->toArray();
+			}
+			
+			array_push($Bouts, $BoutArray);
+		}
+		
+		if(empty($Bouts))
+		{
+			$weightClasses = [];
+			if(strpos($competition["ligaId"], '(S)') === 0)
+			{
+				$weightClasses = [
+					["29", "LL"],
+					["33", "GR"],
+					["36", "LL"],
+					["41", "GR"],
+					["46", "LL"],
+					["50", "GR"],
+					["60", "LL"],
+					["76", "GR"]
+				];
+			}
+			elseif($competition["ligaId"] == "Oberliga" || $competition["ligaId"] == "Bayernliga")
+			{
+				$weightClasses = [
+					["57", "LL"],
+					["61", "GR"],
+					["66", "LL"],
+					["71", "GR"],
+					["75 A", "LL"],
+					["75 B", "GR"],
+					["80", "LL"],
+					["86", "GR"],
+					["98", "LL"],
+					["130", "GR"]
+				];
+			}
+			else
+			{
+				$weightClasses = [
+					["57", "LL"],
+					["61", "GR"],
+					["66", "LL"],
+					["75", "GR"],
+					["86", "LL"],
+					["98", "GR"],
+					["130", "LL"],
+					["57", "GR"],
+					["61", "LL"],
+					["66", "GR"],
+					["75", "LL"],
+					["86", "GR"],
+					["98", "LL"],
+					["130", "GR"]
+				];
+			}
+			
+			$i = 1;
+			foreach ($weightClasses as $weightClass) {
+				$Bout = new Bout();
+				$Bout->saisonId = $sid;
+				$Bout->competitionId = $cid;
+				$Bout->order = $i++;
+				$Bout->weightClass = $weightClass[0];
+				$Bout->style = $weightClass[1];
+				$Bout->homeWrestlerPoints = "0";
+				$Bout->opponentWrestlerPoints = "0";
+				$Bout->round1 = "";
+				$Bout->round2 = "";
+				$Bout->round3 = "";
+				$Bout->round4 = "";
+				$Bout->round5 = "";
+				
+				array_push($Bouts, ($Bout)->toArray());	
+			}
+			
+			
+	
+
+	
+		}
+
+		
+
+		
+		
+		$competition["_boutList"] = $Bouts;
+	
+		$databaseConnection->Close($conn);
+
+		return array('rpcid' => null, 'rc' => 'ok', 'api' => array('rdb' => '3.0.8 \/ 3.0.9','jrcs' => '1.0.3'), 'year' => '2021','sid' => $sid,'cid' => $cid,'flags' => 0, 'competition' => $competition);
+	}
+
+
+
+	private function GetRinger($startausweisnummer,$sid, $cid)
+	{
+		if (!BasicAuthUsers::CheckLogonUser($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']))
+		{
+			throw new ApiException('User '.$_SERVER['PHP_AUTH_USER'].' is not allowed or has wrong password.', ApiException::AUTHENTICATION_FAILED);
 		}
 
 		$databaseConnection = new DatabaseConnection();
 		$conn = $databaseConnection->Connect();		
 
-		$dbResults = $conn->query("SELECT name, givenname, status, birthday FROM jos_rdb_wrestler WHERE Id='rdb.".$startausweisNr."'");
+		$dbResults = $conn->query("SELECT name, givenname, status, birthday FROM jos_rdb_wrestler WHERE Id='rdb.".$startausweisnummer."'");
 
-		$Startausweis = $dbResults->fetch_object('Api\Entity\Startausweis');
+		$Startausweis = $dbResults->fetch_object('Api\Entity\Ringer');
 		
 		$databaseConnection->Close($conn);
 
 		return ($Startausweis)->toArray();
 	}
 	
-	
-	/**
-	 * @param array $data
-	 *
-	 * @return array
-	 */
-	private function create(array $data)
-	{
-		// Benutzer anlegen ...
-		$user           = new User();
-		$user->username = $data['username'];
-
-		// ... und in der Datenbank speichern
-
-		// Für das Beispiel:
-		$user->id = rand(100, 999);
-
-		return ['id' => $user->id];
-	}
 
 	/**
 	 * @param array $data
@@ -227,20 +281,7 @@ class CsController extends ApiController
 	 */
 	private function UpdateCompetition(array $data, $saisonId, $competitionId)
 	{
-		if ($_SERVER['PHP_AUTH_USER'] != 'test' or $_SERVER['PHP_AUTH_PW'] != 'test')
-		{
-			throw new ApiException('User'.$_SERVER['PHP_AUTH_USER'].' is not allowed or has wrong password.', ApiException::AUTHENTICATION_FAILED);
-		}
-
-		$databaseConnection = new DatabaseConnection();
-		$conn = $databaseConnection->Connect();		
-
-		$conn->query("UPDATE jos_rdb_cs__competition SET editorComment = '".$data['editorComment']."', audience = '".$data['audience']."' WHERE saisonId='".$saisonId."' AND competitionId='".$competitionId."'");
-				
-		$databaseConnection->Close($conn);
-		$return['status'] = 'updated';
-		$return['updatedProperties'] = ['editorComment', 'audience'];
-		return $return;
+			throw new ApiException('Function not implemented.', ApiException::NOT_IMPLEMENTED);
 	}
 
 	/**

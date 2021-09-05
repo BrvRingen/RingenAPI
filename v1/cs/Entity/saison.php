@@ -1,7 +1,7 @@
 <?php
 namespace Api\Entity;
 
-class Cs extends BaseEntity
+class saison extends BaseEntity
 {
 	public
 	$saisonId,

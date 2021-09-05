@@ -1,7 +1,7 @@
 <?php
 namespace Api\Entity;
 
-class Table extends BaseEntity
+class liga extends BaseEntity
 {
 	public
 	$saisonId,

@@ -1,7 +1,7 @@
 <?php
 namespace Api\Entity;
 
-class Competition extends BaseEntity
+class competition extends BaseEntity
 {
 	public	
 	$saisonId,

@@ -1,7 +1,7 @@
 <?php
 namespace Api\Entity;
 
-class Startausweis extends BaseEntity
+class Ringer extends BaseEntity
 {
 	public
 	$name,
