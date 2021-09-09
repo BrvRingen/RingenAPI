@@ -7,7 +7,7 @@ use Api\Entity\Bout;
 use Api\Entity\BoutAnnotation;
 use Api\Entity\saison;
 use Api\Entity\competition;
-use Api\Entity\Ringer;
+use Api\Entity\wrestler;
 use Api\Database\DatabaseConnection;
 use Api\Database\BasicAuthUsers;
 
@@ -39,8 +39,8 @@ class CsController extends ApiController
 					$result = $this->GetListCompetition($_GET['sid'], $_GET['ligaId'], $_GET['rid']);
 				elseif($op == 'getCompetition')
 					$result = $this->GetCompetition($_GET['sid'], $_GET['cid']);
-				elseif($op == 'getRinger')
-					$result = $this->GetRinger($_GET['startausweisnummer'],$_GET['sid'], $_GET['cid']);
+				elseif($op == 'getSaisonWrestler')
+					$result = $this->GetSaisonWrestler($_GET['passcode']);
 				else
 					throw new ApiException('', ApiException::UNKNOWN_METHOD);
 			}
@@ -253,7 +253,7 @@ class CsController extends ApiController
 
 
 
-	private function GetRinger($startausweisnummer,$sid, $cid)
+	private function GetSaisonWrestler($passcode)
 	{
 		if (!BasicAuthUsers::CheckLogonUser($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']))
 		{
@@ -263,13 +263,17 @@ class CsController extends ApiController
 		$databaseConnection = new DatabaseConnection();
 		$conn = $databaseConnection->Connect();		
 
-		$dbResults = $conn->query("SELECT name, givenname, status, birthday FROM jos_rdb_wrestler WHERE Id='rdb.".$startausweisnummer."'");
+		$dbResults = $conn->query("SELECT * FROM jos_rdb_wrestler WHERE Id='rdb.".$passcode."'");
 
-		$Startausweis = $dbResults->fetch_object('Api\Entity\Ringer');
+		$wrestler = $dbResults->fetch_object('Api\Entity\wrestler');
 		
 		$databaseConnection->Close($conn);
 
-		return ($Startausweis)->toArray();
+		if($wrestler == null)
+			throw new ApiException('Passcode '.$passcode.' not valid.', ApiException::MALFORMED_INPUT);
+		else
+			return array('rpcid' => null, 'rc' => 'ok', 'api' => array('rdb' => '3.0.8 \/ 3.0.9','jrcs' => '1.0.3'), 'year' => '2021','sid' => '2021','passcode' => $passcode,'nationCode' => "GER",'authCode' => "BRV", 'wrestler' => ($wrestler)->toArray());
+
 	}
 	
 

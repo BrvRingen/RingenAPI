@@ -195,7 +195,7 @@
 			"response": []
 		},
 		{
-			"name": "GetRinger (BasicAuth required)",
+			"name": "GetSaisonWrestler (BasicAuth required)",
 			"request": {
 				"method": "GET",
 				"header": [],
@@ -241,12 +241,12 @@
 		"basic": [
 			{
 				"key": "password",
-				"value": "YourPasswortd",
+				"value": "YourPassword",
 				"type": "string"
 			},
 			{
 				"key": "username",
-				"value": "YourUser",
+				"value": "YourUserName",
 				"type": "string"
 			}
 		]
